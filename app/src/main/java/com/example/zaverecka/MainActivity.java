@@ -14,7 +14,7 @@ import java.util.*;
 
 import static com.example.zaverecka.MainMenuActivity.DIFFICULTY_MEDIUM;
 //je to ass
-
+//git mi prostě nefunguje
 public class MainActivity extends AppCompatActivity {
 
     private LinearLayout tableauLayout;
