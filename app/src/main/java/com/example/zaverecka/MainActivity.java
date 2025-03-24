@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.*;
 
 import static com.example.zaverecka.MainMenuActivity.DIFFICULTY_MEDIUM;
-
+//je to ass
 
 public class MainActivity extends AppCompatActivity {
 
