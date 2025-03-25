@@ -1,8 +1,6 @@
 package com.example.zaverecka;
 
-
-import static com.example.zaverecka.MainMenuActivity.DIFFICULTY_MEDIUM;
-
+import static com.example.zaverecka.Difficulty.*;
 
 import android.os.Bundle;
 import android.view.ViewGroup;
@@ -12,9 +10,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.*;
 
-import static com.example.zaverecka.MainMenuActivity.DIFFICULTY_MEDIUM;
-//je to ass
-//git mi prostě nefunguje
 public class MainActivity extends AppCompatActivity {
 
     private LinearLayout tableauLayout;
@@ -27,83 +22,55 @@ public class MainActivity extends AppCompatActivity {
     private Card selectedCard = null;
     private Stack<Card> selectedPile = null;
 
-    private int difficulty = 1; // výchozí MEDIUM
+    private int difficulty = MEDIUM;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        difficulty = getIntent().getIntExtra("difficulty", MEDIUM);
+        tableauLayout = findViewById(R.id.tableauLayout);
 
         deck = new Deck();
         initTableau();
 
-        difficulty = getIntent().getIntExtra("difficulty", DIFFICULTY_MEDIUM);
+        for (int i = 0; i < 4; i++) foundation.add(new Stack<>());
+        while (!deck.isEmpty()) stock.push(deck.drawCard());
 
-
-        tableauLayout = findViewById(R.id.tableauLayout);
-        deck = new Deck();
-
-        for (int i = 0; i < 7; i++) {
-            Stack<Card> pile = new Stack<>();
-            for (int j = 0; j <= i; j++) {
-                Card c = deck.drawCard();
-                if (j == i) c.flip();
-                pile.push(c);
-            }
-            tableau.add(pile);
-        }
-
-        for (int i = 0; i < 4; i++) {
-            foundation.add(new Stack<>());
-        }
-
-        while (!deck.isEmpty()) {
-            stock.push(deck.drawCard());
-        }
-
-        displayTableau();
-        displayFoundation();
-        displayStockAndWaste();
+        refreshDisplay();
     }
-
 
     private void initTableau() {
+        int[] cardsPerColumn = {7, 7, 7, 7, 7, 7, 7};
         for (int i = 0; i < 7; i++) {
             Stack<Card> pile = new Stack<>();
-            for (int j = 0; j <= i; j++) {
+            for (int j = 0; j < cardsPerColumn[i]; j++) {
                 Card c = deck.drawCard();
-
-                // Rozdílné otočení podle obtížnosti:
                 switch (difficulty) {
-                    case 0: // EASY – všechny otočené
-                        c.flip();
+                    case EASY:
+                        if (j >= cardsPerColumn[i] - 3) c.flip();
                         break;
-                    case 1: // MEDIUM – jen poslední
-                        if (j == i) c.flip();
+                    case MEDIUM:
+                        if (j == cardsPerColumn[i] - 1) c.flip();
                         break;
-                    case 2: // HARD – jen některé
-                        if (j == i && i > 2) c.flip();
+                    case HARD:
+                        if (cardsPerColumn[i] >= 6 && j == cardsPerColumn[i] - 1) c.flip();
                         break;
                 }
-
                 pile.push(c);
             }
             tableau.add(pile);
         }
     }
-
-
 
     private void displayTableau() {
         tableauLayout.removeAllViews();
-
         for (Stack<Card> pile : tableau) {
             LinearLayout column = new LinearLayout(this);
             column.setOrientation(LinearLayout.VERTICAL);
             column.setPadding(8, 0, 8, 0);
 
-            // Prázdný sloupec = možnost přesunout krále
             if (pile.isEmpty()) {
                 column.setOnClickListener(v -> {
                     if (selectedCard != null && selectedCard.getValue() == 13) {
@@ -123,27 +90,25 @@ public class MainActivity extends AppCompatActivity {
             for (Card card : pile) {
                 ImageView cardView = new ImageView(this);
                 cardView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
+                cardView.setTranslationY(index * 30);
 
-                // Nastavení obrázku karty
                 if (card.isFaceUp()) {
                     int resId = getResources().getIdentifier(getCardResourceName(card), "drawable", getPackageName());
-                    cardView.setImageResource(resId != 0 ? resId : R.drawable.card_front);
-                } else {
-                    cardView.setImageResource(R.drawable.card_back);
-                }
+                    if (resId != 0) {
+                        imageView.setImageResource(resId);
+                    } else {
+                        imageView.setImageResource(R.drawable.card_front); // fallback
+                    }
 
                 final Card clickedCard = card;
                 final Stack<Card> currentPile = pile;
 
                 cardView.setOnClickListener(v -> {
                     if (!clickedCard.isFaceUp()) return;
-
                     if (selectedCard == null) {
-                        // První klik – vyber kartu
                         selectedCard = clickedCard;
                         selectedPile = currentPile;
                     } else {
-                        // Druhé kliknutí – pokus o přesun
                         attemptMove(selectedCard, selectedPile, clickedCard, currentPile);
                         selectedCard = null;
                         selectedPile = null;
@@ -154,37 +119,42 @@ public class MainActivity extends AppCompatActivity {
                 column.addView(cardView);
                 index++;
             }
-
             tableauLayout.addView(column);
         }
     }
 
-
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
-        if (!toCard.isFaceUp()) return;
-
-        if (isOppositeColor(fromCard, toCard) && fromCard.getValue() + 1 == toCard.getValue()) {
-            Stack<Card> tempStack = new Stack<>();
-            while (!fromPile.isEmpty()) {
-                Card c = fromPile.pop();
-                tempStack.push(c);
-                if (c == fromCard) break;
-            }
-
-            while (!tempStack.isEmpty()) {
-                toPile.push(tempStack.pop());
-            }
-
-            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) {
-                fromPile.peek().flip();
-            }
+        if (toCard == null && toPile.isEmpty()) {
+            if (fromCard.getValue() == 13) moveCardStack(fromCard, fromPile, toPile);
+            return;
         }
+        if (toCard != null && isOppositeColor(fromCard, toCard) && fromCard.getValue() + 1 == toCard.getValue()) {
+            moveCardStack(fromCard, fromPile, toPile);
+        }
+    }
+
+    private void moveCardStack(Card fromCard, Stack<Card> fromPile, Stack<Card> toPile) {
+        Stack<Card> tempStack = new Stack<>();
+        while (!fromPile.isEmpty()) {
+            Card c = fromPile.pop();
+            tempStack.push(c);
+            if (c == fromCard) break;
+        }
+        while (!tempStack.isEmpty()) toPile.push(tempStack.pop());
+        if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) fromPile.peek().flip();
+        refreshDisplay();
     }
 
     private boolean isOppositeColor(Card a, Card b) {
         boolean aRed = a.getSuit() == Card.Suit.HEARTS || a.getSuit() == Card.Suit.DIAMONDS;
         boolean bRed = b.getSuit() == Card.Suit.HEARTS || b.getSuit() == Card.Suit.DIAMONDS;
         return aRed != bRed;
+    }
+
+    private void refreshDisplay() {
+        displayTableau();
+        displayFoundation();
+        displayStockAndWaste();
     }
 
     private void displayFoundation() {
@@ -200,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 int resId = getResources().getIdentifier(getCardResourceName(pile.peek()), "drawable", getPackageName());
                 imageView.setImageResource(resId != 0 ? resId : R.drawable.card_front);
             } else {
-                imageView.setImageResource(R.drawable.card_back);
+                imageView.setImageResource(R.drawable.card_back); // můžeš změnit na prázdnou ikonu
             }
 
             int finalI = i;
@@ -222,29 +192,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
-        if (pile.isEmpty()) return card.getValue() == 1;
-        Card top = pile.peek();
-        return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
-    }
-
-    private void checkForWin() {
-        int total = 0;
-        for (Stack<Card> pile : foundation) {
-            total += pile.size();
-        }
-        if (total == 52) {
-            Toast.makeText(this, "🎉 Vyhrál jsi!", Toast.LENGTH_LONG).show();
-        }
-    }
 
     private void displayStockAndWaste() {
         LinearLayout stockWasteLayout = findViewById(R.id.stockWasteLayout);
         stockWasteLayout.removeAllViews();
 
+        // STOCK
         ImageView stockView = new ImageView(this);
         stockView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
-        stockView.setImageResource(R.drawable.card_back);
+        stockView.setImageResource(stock.isEmpty() ? R.drawable.card_front : R.drawable.card_back);
 
         stockView.setOnClickListener(v -> {
             if (!stock.isEmpty()) {
@@ -263,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
         stockWasteLayout.addView(stockView);
 
+        // WASTE
         ImageView wasteView = new ImageView(this);
         wasteView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
 
@@ -270,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
             Card topWaste = waste.peek();
             int resId = getResources().getIdentifier(getCardResourceName(topWaste), "drawable", getPackageName());
             wasteView.setImageResource(resId != 0 ? resId : R.drawable.card_front);
-
             wasteView.setOnClickListener(v -> {
                 if (selectedCard == null) {
                     selectedCard = topWaste;
@@ -278,32 +234,40 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } else {
-            wasteView.setImageResource(R.drawable.card_back);
+            wasteView.setImageResource(R.drawable.card_front);
         }
 
         stockWasteLayout.addView(wasteView);
     }
 
-    private void refreshDisplay() {
-        displayTableau();
-        displayFoundation();
-        displayStockAndWaste();
-    }
 
     private String getCardResourceName(Card card) {
-        String suit = card.getSuit().name().toLowerCase(); // "spade"
+        String suit = card.getSuit().name().toLowerCase();
         int value = card.getValue();
         String valueName;
-
         switch (value) {
-            case 1: valueName = "1_ace"; break;
             case 11: valueName = "11_jack"; break;
             case 12: valueName = "12_queen"; break;
             case 13: valueName = "13_king"; break;
-            default: valueName = String.valueOf(value); // 2–10
+            default: valueName = String.valueOf(value);
         }
-
         return suit + "_" + valueName;
+    }private void checkForWin() {
+        int total = 0;
+        for (Stack<Card> pile : foundation) {
+            total += pile.size();
+        }
+        if (total == 52) {
+            Toast.makeText(this, "🎉 Vyhrál jsi!", Toast.LENGTH_LONG).show();
+        }
+    }private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
+        if (pile.isEmpty()) {
+            return card.getValue() == 1; // pouze eso může začít
+        }
+        Card top = pile.peek();
+        return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
     }
 
 }
+
+

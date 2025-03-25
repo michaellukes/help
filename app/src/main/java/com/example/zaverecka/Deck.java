@@ -1,22 +1,22 @@
 package com.example.zaverecka;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Stack;
 
 public class Deck {
-    private List<Card> cards = new ArrayList<>();
+    private Stack<Card> cards = new Stack<>();
 
     public Deck() {
         for (Card.Suit suit : Card.Suit.values()) {
-            for (int i = 1; i <= 13; i++) {
-                cards.add(new Card(suit, i));
+            for (int cardValue = 1; cardValue <= 13; cardValue++) {
+                cards.push(new Card(suit, cardValue));
             }
         }
         Collections.shuffle(cards);
     }
 
     public Card drawCard() {
-        if (cards.isEmpty()) return null;
-        return cards.remove(cards.size() - 1);
+        return cards.pop();
     }
 
     public boolean isEmpty() {
