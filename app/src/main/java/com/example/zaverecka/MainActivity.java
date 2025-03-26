@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             tableauLayout.addView(column);
         }
     }
-
+//je to cooked
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
         if (toCard == null && toPile.isEmpty()) {
             if (fromCard.getValue() == 13) moveCardStack(fromCard, fromPile, toPile);
