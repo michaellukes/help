@@ -95,10 +95,13 @@ public class MainActivity extends AppCompatActivity {
                 if (card.isFaceUp()) {
                     int resId = getResources().getIdentifier(getCardResourceName(card), "drawable", getPackageName());
                     if (resId != 0) {
-                        imageView.setImageResource(resId);
+                        cardView.setImageResource(resId);
                     } else {
-                        imageView.setImageResource(R.drawable.card_front); // fallback
+                        cardView.setImageResource(R.drawable.card_front); // fallback
                     }
+                } else {
+                    cardView.setImageResource(R.drawable.card_back);
+                }
 
                 final Card clickedCard = card;
                 final Stack<Card> currentPile = pile;
@@ -122,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
             tableauLayout.addView(column);
         }
     }
-//je to cooked
+
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
         if (toCard == null && toPile.isEmpty()) {
             if (fromCard.getValue() == 13) moveCardStack(fromCard, fromPile, toPile);
@@ -170,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                 int resId = getResources().getIdentifier(getCardResourceName(pile.peek()), "drawable", getPackageName());
                 imageView.setImageResource(resId != 0 ? resId : R.drawable.card_front);
             } else {
-                imageView.setImageResource(R.drawable.card_back); // můžeš změnit na prázdnou ikonu
+                imageView.setImageResource(R.drawable.card_back);
             }
 
             int finalI = i;
@@ -192,12 +195,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void displayStockAndWaste() {
         LinearLayout stockWasteLayout = findViewById(R.id.stockWasteLayout);
         stockWasteLayout.removeAllViews();
 
-        // STOCK
         ImageView stockView = new ImageView(this);
         stockView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
         stockView.setImageResource(stock.isEmpty() ? R.drawable.card_front : R.drawable.card_back);
@@ -219,7 +220,6 @@ public class MainActivity extends AppCompatActivity {
 
         stockWasteLayout.addView(stockView);
 
-        // WASTE
         ImageView wasteView = new ImageView(this);
         wasteView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
 
@@ -240,7 +240,6 @@ public class MainActivity extends AppCompatActivity {
         stockWasteLayout.addView(wasteView);
     }
 
-
     private String getCardResourceName(Card card) {
         String suit = card.getSuit().name().toLowerCase();
         int value = card.getValue();
@@ -252,7 +251,9 @@ public class MainActivity extends AppCompatActivity {
             default: valueName = String.valueOf(value);
         }
         return suit + "_" + valueName;
-    }private void checkForWin() {
+    }
+
+    private void checkForWin() {
         int total = 0;
         for (Stack<Card> pile : foundation) {
             total += pile.size();
@@ -260,14 +261,13 @@ public class MainActivity extends AppCompatActivity {
         if (total == 52) {
             Toast.makeText(this, "🎉 Vyhrál jsi!", Toast.LENGTH_LONG).show();
         }
-    }private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
+    }
+
+    private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
         if (pile.isEmpty()) {
-            return card.getValue() == 1; // pouze eso může začít
+            return card.getValue() == 1;
         }
         Card top = pile.peek();
         return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
     }
-
 }
-
-
