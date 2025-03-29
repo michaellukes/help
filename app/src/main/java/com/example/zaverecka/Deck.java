@@ -8,8 +8,8 @@ public class Deck {
 
     public Deck() {
         for (Card.Suit suit : Card.Suit.values()) {
-            for (int cardValue = 1; cardValue <= 13; cardValue++) {
-                cards.push(new Card(suit, cardValue));
+            for (int value = 1; value <= 13; value++) {
+                cards.push(new Card(suit, value));
             }
         }
         Collections.shuffle(cards);

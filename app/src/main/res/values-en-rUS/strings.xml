@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="game_title">Solitaire – Midterm work</string>
+    <string name="easy_difficulty">EASY Difficulty</string>
+    <string name="medium_difficulty">MEDIUM Difficulty</string>
+    <string name="hard_difficulty">HARD Difficulty</string>
+    <string name="stock_pile">Stock pile</string>
+    <string name="waste_pile">Waste pile</string>
+</resources>

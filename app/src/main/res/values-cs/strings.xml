@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="game_title">Solitaire – Závěrečná práce</string>
     <string name="easy_difficulty">Lehká obtížnost</string>
     <string name="medium_difficulty">Střední obtížnost</string>
     <string name="hard_difficulty">Těžká obtížnost</string>
-    <string name="stock_pile">Stock pile</string>
-    <string name="waste_pile">Waste pile</string>
+    <string name="stock_pile">Lízací balíček</string>
+    <string name="waste_pile">Odkládací hromádka</string>
 </resources>

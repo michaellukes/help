@@ -3,39 +3,66 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@android:color/holo_green_dark"
+    android:background="@drawable/background_green"
     android:padding="8dp">
 
-    <!-- Horní panel: stock + waste -->
+    <!-- Horní řádek: Stock + Waste + Foundation -->
     <LinearLayout
-        android:id="@+id/stockWasteLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="start"
-        android:paddingBottom="8dp" />
+        android:gravity="center_vertical"
+        android:paddingBottom="16dp">
 
-    <!-- Foundation vpravo nahoře -->
-    <LinearLayout
-        android:id="@+id/foundationLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:paddingBottom="8dp" />
+        <!-- Stock a Waste -->
+        <LinearLayout
+            android:id="@+id/stockWasteLayout"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start|center_vertical">
+
+            <ImageView
+                android:id="@+id/stockView"
+                android:layout_width="60dp"
+                android:layout_height="90dp"
+                android:src="@drawable/card_back"
+                android:contentDescription="@string/stock_pile" />
+
+            <ImageView
+                android:id="@+id/wasteView"
+                android:layout_width="60dp"
+                android:layout_height="90dp"
+                android:src="@drawable/empty_pile"
+                android:contentDescription="@string/waste_pile"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <!-- Foundation -->
+        <LinearLayout
+            android:id="@+id/foundationLayout"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end|center_vertical">
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- Tableau (herní pole) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:id="@+id/tableauLayout"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:gravity="top" />
+            android:gravity="top"
+            android:padding="4dp"/>
     </HorizontalScrollView>
-
 </LinearLayout>

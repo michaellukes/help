@@ -7,18 +7,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainMenuActivity extends AppCompatActivity {
 
-    public static final int DIFFICULTY_EASY = 0;
-    public static final int DIFFICULTY_MEDIUM = 1;
-    public static final int DIFFICULTY_HARD = 2;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-        findViewById(R.id.btnEasy).setOnClickListener(v -> startGame(DIFFICULTY_EASY));
-        findViewById(R.id.btnMedium).setOnClickListener(v -> startGame(DIFFICULTY_MEDIUM));
-        findViewById(R.id.btnHard).setOnClickListener(v -> startGame(DIFFICULTY_HARD));
+        findViewById(R.id.btnEasy).setOnClickListener(v -> startGame(Difficulty.EASY));
+        findViewById(R.id.btnMedium).setOnClickListener(v -> startGame(Difficulty.MEDIUM));
+        findViewById(R.id.btnHard).setOnClickListener(v -> startGame(Difficulty.HARD));
     }
 
     private void startGame(int difficulty) {
