@@ -1,20 +1,20 @@
 package com.example.zaverecka;
 
+import static com.example.zaverecka.Difficulty.*;
+
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.*;
 
-import static com.example.zaverecka.Difficulty.*;
-
 public class MainActivity extends AppCompatActivity {
 
     private LinearLayout tableauLayout;
-    private LinearLayout foundationLayout;
-    private LinearLayout stockWasteLayout;
     private Deck deck;
     private List<Stack<Card>> tableau = new ArrayList<>();
     private List<Stack<Card>> foundation = new ArrayList<>();
@@ -33,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
 
         difficulty = getIntent().getIntExtra("difficulty", MEDIUM);
         tableauLayout = findViewById(R.id.tableauLayout);
-        foundationLayout = findViewById(R.id.foundationLayout);
-        stockWasteLayout = findViewById(R.id.stockWasteLayout);
 
         deck = new Deck();
         initTableau();
@@ -45,13 +43,19 @@ public class MainActivity extends AppCompatActivity {
         refreshDisplay();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+
     private void initTableau() {
-        int[] cardsPerColumn = {1, 2, 3, 4, 5, 6, 7};
+        tableau.clear();
+
         for (int i = 0; i < 7; i++) {
             Stack<Card> pile = new Stack<>();
-            for (int j = 0; j < cardsPerColumn[i]; j++) {
+            for (int j = 0; j <= i; j++) {
                 Card c = deck.drawCard();
-                if (j == cardsPerColumn[i] - 1) c.flip();
+                if (j == i) c.flip();
                 pile.push(c);
             }
             tableau.add(pile);
@@ -60,23 +64,39 @@ public class MainActivity extends AppCompatActivity {
 
     private void displayTableau() {
         tableauLayout.removeAllViews();
+
         for (Stack<Card> pile : tableau) {
             LinearLayout column = new LinearLayout(this);
             column.setOrientation(LinearLayout.VERTICAL);
             column.setPadding(8, 0, 8, 0);
 
-            int index = 0;
-            for (Card card : pile) {
+            if (pile.isEmpty()) {
+                column.setOnClickListener(v -> {
+                    if (selectedCard != null && selectedCard.getValue() == 13) {
+                        pile.push(selectedCard);
+                        selectedPile.remove(selectedCard);
+                        if (!selectedPile.isEmpty() && !selectedPile.peek().isFaceUp()) {
+                            selectedPile.peek().flip();
+                        }
+                        selectedCard = null;
+                        selectedPile = null;
+                        refreshDisplay();
+                    }
+                });
+            }
+
+            for (int i = 0; i < pile.size(); i++) {
+                Card card = pile.get(i);
                 ImageView cardView = new ImageView(this);
-                cardView.setLayoutParams(new ViewGroup.LayoutParams(120, 180));
-                cardView.setTranslationY(index * 30);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(120, 180);
+                if (i != 0) params.topMargin = -140;
+                cardView.setLayoutParams(params);
 
                 int resId = getResources().getIdentifier(getCardResourceName(card), "drawable", getPackageName());
-                cardView.setImageResource(resId != 0 ? resId : R.drawable.card_front);
+                cardView.setImageResource(card.isFaceUp() ? (resId != 0 ? resId : R.drawable.card_front) : R.drawable.card_back);
 
                 final Card clickedCard = card;
                 final Stack<Card> currentPile = pile;
-                final int cardIndex = index;
 
                 cardView.setOnClickListener(v -> {
                     if (!clickedCard.isFaceUp()) return;
@@ -98,27 +118,32 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 column.addView(cardView);
-                index++;
             }
             tableauLayout.addView(column);
         }
     }
 
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
-        if (!toCard.isFaceUp()) return;
+        if (fromCard == toCard) return;
 
-        int fromIndex = fromPile.indexOf(fromCard);
-        if (fromIndex == -1) return;
+        Stack<Card> tempStack = new Stack<>();
+        boolean found = false;
 
-        List<Card> movableStack = fromPile.subList(fromIndex, fromPile.size());
+        for (Card c : fromPile) {
+            if (c == fromCard) found = true;
+            if (found) tempStack.push(c);
+        }
 
-        if (isOppositeColor(fromCard, toCard) && fromCard.getValue() + 1 == toCard.getValue()) {
-            toPile.addAll(new ArrayList<>(movableStack));
-            movableStack.clear();
+        if (!tempStack.isEmpty() &&
+                (toCard == null && toPile.isEmpty() && fromCard.getValue() == 13 ||
+                        toCard != null && isOppositeColor(fromCard, toCard) && fromCard.getValue() + 1 == toCard.getValue())) {
 
-            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) {
-                fromPile.peek().flip();
+            for (Card c : tempStack) {
+                toPile.push(c);
             }
+            fromPile.removeAll(tempStack);
+
+            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) fromPile.peek().flip();
         }
     }
 
@@ -128,8 +153,16 @@ public class MainActivity extends AppCompatActivity {
         return aRed != bRed;
     }
 
+    private void refreshDisplay() {
+        displayTableau();
+        displayFoundation();
+        displayStockAndWaste();
+    }
+
     private void displayFoundation() {
+        LinearLayout foundationLayout = findViewById(R.id.foundationLayout);
         foundationLayout.removeAllViews();
+
         for (int i = 0; i < foundation.size(); i++) {
             Stack<Card> pile = foundation.get(i);
             ImageView imageView = new ImageView(this);
@@ -161,23 +194,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
-        if (pile.isEmpty()) return card.getValue() == 1;
-        Card top = pile.peek();
-        return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
-    }
-
-    private void checkForWin() {
-        int total = 0;
-        for (Stack<Card> pile : foundation) {
-            total += pile.size();
-        }
-        if (total == 52) {
-            Toast.makeText(this, "🎉 Vyhrál jsi!", Toast.LENGTH_LONG).show();
-        }
-    }
-
     private void displayStockAndWaste() {
+        LinearLayout stockWasteLayout = findViewById(R.id.stockWasteLayout);
         stockWasteLayout.removeAllViews();
 
         ImageView stockView = new ImageView(this);
@@ -212,6 +230,11 @@ public class MainActivity extends AppCompatActivity {
                 if (selectedCard == null) {
                     selectedCard = topWaste;
                     selectedPile = waste;
+                } else {
+                    attemptMove(selectedCard, selectedPile, topWaste, tableau.get(0));
+                    selectedCard = null;
+                    selectedPile = null;
+                    refreshDisplay();
                 }
             });
         } else {
@@ -222,21 +245,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getCardResourceName(Card card) {
-        String suit = card.getSuit().name().toLowerCase();
-        int value = card.getValue();
-        String valueName;
-        switch (value) {
-            case 11: valueName = "11_jack"; break;
-            case 12: valueName = "12_queen"; break;
-            case 13: valueName = "13_king"; break;
-            default: valueName = String.valueOf(value);
+        String suit;
+        switch (card.getSuit()) {
+            case HEARTS: suit = "heart"; break;
+            case DIAMONDS: suit = "diamond"; break;
+            case CLUBS: suit = "club"; break;
+            case SPADES: suit = "spade"; break;
+            default: suit = "back"; break;
         }
-        return suit + "_" + valueName;
+
+        int value = card.getValue();
+        switch (value) {
+            case 11: return suit + "_11_jack";
+            case 12: return suit + "_12_queen";
+            case 13: return suit + "_13_king";
+            default: return suit + "_" + value;
+        }
     }
 
-    private void refreshDisplay() {
-        displayTableau();
-        displayFoundation();
-        displayStockAndWaste();
+    private void checkForWin() {
+        int total = 0;
+        for (Stack<Card> pile : foundation) {
+            total += pile.size();
+        }
+        if (total == 52) {
+            Toast.makeText(this, "🎉 Vyhrál jsi!", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
+        if (pile.isEmpty()) {
+            return card.getValue() == 1;
+        }
+        Card top = pile.peek();
+        return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
     }
 }
