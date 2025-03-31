@@ -3,6 +3,7 @@ package com.example.zaverecka;
 import static com.example.zaverecka.Difficulty.*;
 
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -124,26 +125,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
-        if (fromCard == toCard) return;
+        // Získání všech karet od vybrané karty až po vrchol původního balíčku
+        int fromIndex = fromPile.indexOf(fromCard);
+        if (fromIndex == -1) return;
 
-        Stack<Card> tempStack = new Stack<>();
-        boolean found = false;
+        List<Card> cardsToMove = new ArrayList<>(fromPile.subList(fromIndex, fromPile.size()));
 
-        for (Card c : fromPile) {
-            if (c == fromCard) found = true;
-            if (found) tempStack.push(c);
+        // Kontrola pravidel pro přesun
+        boolean isValidMove = false;
+        if (toPile.isEmpty()) {
+            // Přesun na prázdnou hromádku - pouze král (hodnota 13)
+            isValidMove = (fromCard.getValue() == 13);
+        } else if (toCard != null) {
+            // Standardní přesun - opačná barva a hodnota o 1 nižší
+            isValidMove = isOppositeColor(fromCard, toCard) &&
+                    (fromCard.getValue() == toCard.getValue() - 1);
         }
 
-        if (!tempStack.isEmpty() &&
-                (toCard == null && toPile.isEmpty() && fromCard.getValue() == 13 ||
-                        toCard != null && isOppositeColor(fromCard, toCard) && fromCard.getValue() + 1 == toCard.getValue())) {
-
-            for (Card c : tempStack) {
-                toPile.push(c);
+        if (isValidMove) {
+            // Provedení přesunu
+            for (Card card : cardsToMove) {
+                toPile.push(card);
             }
-            fromPile.removeAll(tempStack);
+            fromPile.removeAll(cardsToMove);
 
-            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) fromPile.peek().flip();
+            // Otočení vrchní karty v původním balíčku, pokud je rubem nahoru
+            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) {
+                fromPile.peek().flip();
+            }
+
+            refreshDisplay();
         }
     }
 
@@ -154,9 +165,39 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void refreshDisplay() {
+        // Nejprve obnovíme všechny pohledy
         displayTableau();
         displayFoundation();
         displayStockAndWaste();
+
+        // Pak zvýrazníme vybranou kartu (pokud existuje)
+        if (selectedCard != null) {
+            highlightSelectedCard();
+        }
+    }
+
+    private void highlightSelectedCard() {
+        // Projdeme všechny karty v Tableau
+        for (int i = 0; i < tableau.size(); i++) {
+            Stack<Card> pile = tableau.get(i);
+            LinearLayout column = (LinearLayout) tableauLayout.getChildAt(i);
+
+            for (int j = 0; j < column.getChildCount(); j++) {
+                ImageView cardView = (ImageView) column.getChildAt(j);
+                Card card = pile.get(j);
+
+                if (card == selectedCard) {
+                    cardView.setBackgroundColor(Color.parseColor("#80FFEB3B"));
+                }
+            }
+        }
+
+        // Zkontrolujeme Waste pile
+        if (!waste.isEmpty() && waste.peek() == selectedCard) {
+            LinearLayout stockWasteLayout = findViewById(R.id.stockWasteLayout);
+            ImageView wasteView = (ImageView) stockWasteLayout.getChildAt(1);
+            wasteView.setBackgroundColor(Color.parseColor("#80FFEB3B"));
+        }
     }
 
     private void displayFoundation() {
@@ -275,9 +316,13 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
         if (pile.isEmpty()) {
+            // Na prázdný základ lze dát pouze eso (hodnota 1)
             return card.getValue() == 1;
+        } else {
+            // Následující karty musí být stejné barvy a o 1 vyšší
+            Card topCard = pile.peek();
+            return card.getSuit() == topCard.getSuit() &&
+                    card.getValue() == topCard.getValue() + 1;
         }
-        Card top = pile.peek();
-        return card.getSuit() == top.getSuit() && card.getValue() == top.getValue() + 1;
     }
 }
