@@ -66,57 +66,72 @@ public class MainActivity extends AppCompatActivity {
     private void displayTableau() {
         tableauLayout.removeAllViews();
 
-        for (Stack<Card> pile : tableau) {
+        for (int i = 0; i < tableau.size(); i++) {
+            Stack<Card> pile = tableau.get(i);
             LinearLayout column = new LinearLayout(this);
             column.setOrientation(LinearLayout.VERTICAL);
             column.setPadding(8, 0, 8, 0);
 
+            // Kliknutí na prázdný sloupec (pro přesun krále)
             if (pile.isEmpty()) {
                 column.setOnClickListener(v -> {
                     if (selectedCard != null && selectedCard.getValue() == 13) {
-                        pile.push(selectedCard);
-                        selectedPile.remove(selectedCard);
-                        if (!selectedPile.isEmpty() && !selectedPile.peek().isFaceUp()) {
-                            selectedPile.peek().flip();
-                        }
-                        selectedCard = null;
-                        selectedPile = null;
-                        refreshDisplay();
+                        moveCards(selectedCard, selectedPile, pile);
                     }
                 });
             }
 
-            for (int i = 0; i < pile.size(); i++) {
-                Card card = pile.get(i);
+            // Vytvoření pohledů pro všechny karty v balíčku
+            for (int j = 0; j < pile.size(); j++) {
+                Card card = pile.get(j);
                 ImageView cardView = new ImageView(this);
+
+                // Nastavení rozměrů a překryvu karet
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(120, 180);
-                if (i != 0) params.topMargin = -140;
+                if (j > 0) {
+                    params.topMargin = -140; // Překrytí karet
+                }
                 cardView.setLayoutParams(params);
 
-                int resId = getResources().getIdentifier(getCardResourceName(card), "drawable", getPackageName());
-                cardView.setImageResource(card.isFaceUp() ? (resId != 0 ? resId : R.drawable.card_front) : R.drawable.card_back);
+                // Načtení správného obrázku karty
+                String resourceName = getCardResourceName(card);
+                int resId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
+                cardView.setImageResource(card.isFaceUp() ? (resId != 0 ? resId : R.drawable.card_front)
+                        : R.drawable.card_back);
 
-                final Card clickedCard = card;
-                final Stack<Card> currentPile = pile;
-
-                cardView.setOnClickListener(v -> {
-                    if (!clickedCard.isFaceUp()) return;
-
-                    if (selectedCard == null) {
-                        selectedCard = clickedCard;
-                        selectedPile = currentPile;
+                // Zvýraznění vybrané karty a všech karet pod ní
+                if (selectedCard != null && pile.contains(selectedCard)) {
+                    int selectedIndex = pile.indexOf(selectedCard);
+                    if (j >= selectedIndex) {
+                        cardView.setBackgroundColor(Color.parseColor("#80FFEB3B")); // Žluté zvýraznění
                     } else {
-                        if (clickedCard == selectedCard) {
+                        cardView.setBackgroundColor(Color.TRANSPARENT);
+                    }
+                } else {
+                    cardView.setBackgroundColor(Color.TRANSPARENT);
+                }
+
+                // Kliknutí na kartu (pouze pokud je lícem nahoru)
+                if (card.isFaceUp()) {
+                    final Card clickedCard = card;
+                    final Stack<Card> currentPile = pile;
+
+                    cardView.setOnClickListener(v -> {
+                        if (selectedCard == null) {
+                            // První výběr karty
+                            selectedCard = clickedCard;
+                            selectedPile = currentPile;
+                        } else if (selectedCard == clickedCard) {
+                            // Zrušení výběru
                             selectedCard = null;
                             selectedPile = null;
                         } else {
+                            // Pokus o přesun
                             attemptMove(selectedCard, selectedPile, clickedCard, currentPile);
-                            selectedCard = null;
-                            selectedPile = null;
-                            refreshDisplay();
                         }
-                    }
-                });
+                        refreshDisplay();
+                    });
+                }
 
                 column.addView(cardView);
             }
@@ -125,37 +140,85 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
-        // Získání všech karet od vybrané karty až po vrchol původního balíčku
         int fromIndex = fromPile.indexOf(fromCard);
         if (fromIndex == -1) return;
 
         List<Card> cardsToMove = new ArrayList<>(fromPile.subList(fromIndex, fromPile.size()));
 
-        // Kontrola pravidel pro přesun
         boolean isValidMove = false;
         if (toPile.isEmpty()) {
-            // Přesun na prázdnou hromádku - pouze král (hodnota 13)
-            isValidMove = (fromCard.getValue() == 13);
-        } else if (toCard != null) {
-            // Standardní přesun - opačná barva a hodnota o 1 nižší
+            isValidMove = (fromCard.getValue() == 13); // Pouze král na prázdné místo
+        } else {
             isValidMove = isOppositeColor(fromCard, toCard) &&
                     (fromCard.getValue() == toCard.getValue() - 1);
         }
 
         if (isValidMove) {
-            // Provedení přesunu
-            for (Card card : cardsToMove) {
-                toPile.push(card);
-            }
-            fromPile.removeAll(cardsToMove);
-
-            // Otočení vrchní karty v původním balíčku, pokud je rubem nahoru
-            if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) {
-                fromPile.peek().flip();
-            }
-
-            refreshDisplay();
+            moveCards(fromCard, fromPile, toPile);
         }
+    }
+
+    private void moveCards(Card fromCard, Stack<Card> fromPile, Stack<Card> toPile) {
+        int fromIndex = fromPile.indexOf(fromCard);
+        List<Card> cardsToMove = new ArrayList<>(fromPile.subList(fromIndex, fromPile.size()));
+
+        for (Card card : cardsToMove) {
+            toPile.push(card);
+        }
+        fromPile.removeAll(cardsToMove);
+
+        if (!fromPile.isEmpty() && !fromPile.peek().isFaceUp()) {
+            fromPile.peek().flip();
+        }
+
+        selectedCard = null;
+        selectedPile = null;
+    }
+    private ImageView createCardView(Card card, Stack<Card> pile, int position) {
+        ImageView cardView = new ImageView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(120, 180);
+        if (position > 0) {
+            params.topMargin = -140; // Překrývání karet
+        }
+        cardView.setLayoutParams(params);
+
+        String resourceName = getCardResourceName(card);
+        int resId = getResources().getIdentifier(resourceName, "drawable", getPackageName());
+        cardView.setImageResource(card.isFaceUp() ? (resId != 0 ? resId : R.drawable.card_front)
+                : R.drawable.card_back);
+
+        if (card.isFaceUp()) {
+            cardView.setOnClickListener(v -> handleCardClick(card, pile));
+        }
+
+        // Zvýraznění vybrané karty a všech pod ní
+        if (selectedCard != null && pile.contains(selectedCard)) {
+            int selectedIndex = pile.indexOf(selectedCard);
+            if (position >= selectedIndex) {
+                cardView.setBackgroundColor(Color.parseColor("#80FFEB3B"));
+            } else {
+                cardView.setBackgroundColor(Color.TRANSPARENT);
+            }
+        } else {
+            cardView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        return cardView;
+    }
+    private void handleCardClick(Card card, Stack<Card> pile) {
+        if (selectedCard == null) {
+            // První výběr karty
+            selectedCard = card;
+            selectedPile = pile;
+        } else if (selectedCard == card) {
+            // Zrušení výběru
+            selectedCard = null;
+            selectedPile = null;
+        } else {
+            // Pokus o přesun
+            attemptMove(selectedCard, selectedPile, card, pile);
+        }
+        refreshDisplay();
     }
 
     private boolean isOppositeColor(Card a, Card b) {
