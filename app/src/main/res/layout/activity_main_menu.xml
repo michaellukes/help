@@ -1,55 +1,44 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="32dp"
-    android:background="@drawable/menu_background">
+    android:background="@drawable/background_green"
+    android:padding="32dp">
 
     <TextView
         android:id="@+id/titleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/game_title"
-        android:textSize="28sp"
+        android:text="Solitaire"
+        android:textSize="32sp"
         android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="48dp"
-        android:shadowColor="#000000"
-        android:shadowRadius="4"
-        android:shadowDx="2"
-        android:shadowDy="2"/>
+        android:textColor="#333333"
+        android:layout_marginBottom="48dp" />
 
     <Button
         android:id="@+id/btnEasy"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:text="@string/easy_difficulty"
-        android:textSize="18sp"
-        android:background="@drawable/button_green"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="24dp" />
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:text="Lehká hra"
+        android:textAllCaps="false"
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btnMedium"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:text="@string/medium_difficulty"
-        android:textSize="18sp"
-        android:background="@drawable/button_blue"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="24dp" />
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:text="Střední hra"
+        android:textAllCaps="false"
+        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btnHard"
-        android:layout_width="240dp"
-        android:layout_height="60dp"
-        android:text="@string/hard_difficulty"
-        android:textSize="18sp"
-        android:background="@drawable/button_red"
-        android:textColor="#FFFFFF" />
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:text="Těžká hra"
+        android:textAllCaps="false"
+        android:layout_marginBottom="16dp" />
 
 
 </LinearLayout>
