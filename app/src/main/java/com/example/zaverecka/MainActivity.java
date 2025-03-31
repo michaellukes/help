@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int difficulty = MEDIUM;
 
+    // Nastaví obsah obrazovky hlavního menu a nastaví posluchače tlačítek
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         super.onConfigurationChanged(newConfig);
     }
 
+// Inicializuje rozložení karet do 7 sloupců podle pravidel hry
     private void initTableau() {
         tableau.clear();
 
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+// Vykreslí aktuální rozložení tabulky (tableau) do layoutu
     private void displayTableau() {
         tableauLayout.removeAllViews();
 
@@ -139,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Pokusí se přesunout vybranou kartu (a karty pod ní) na cílovou kartu dle pravidel
     private void attemptMove(Card fromCard, Stack<Card> fromPile, Card toCard, Stack<Card> toPile) {
         int fromIndex = fromPile.indexOf(fromCard);
         if (fromIndex == -1) return;
@@ -158,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Provede přesun karet mezi dvěma sloupci a otočí vrchní kartu zdroje pokud je lícem dolů
     private void moveCards(Card fromCard, Stack<Card> fromPile, Stack<Card> toPile) {
         int fromIndex = fromPile.indexOf(fromCard);
         List<Card> cardsToMove = new ArrayList<>(fromPile.subList(fromIndex, fromPile.size()));
@@ -174,6 +179,8 @@ public class MainActivity extends AppCompatActivity {
         selectedCard = null;
         selectedPile = null;
     }
+
+    // Vytvoří vizuální zobrazení jedné karty včetně klikací logiky
     private ImageView createCardView(Card card, Stack<Card> pile, int position) {
         ImageView cardView = new ImageView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(120, 180);
@@ -205,6 +212,8 @@ public class MainActivity extends AppCompatActivity {
 
         return cardView;
     }
+
+    // Zpracuje kliknutí na kartu – výběr nebo pokus o přesun
     private void handleCardClick(Card card, Stack<Card> pile) {
         if (selectedCard == null) {
             // První výběr karty
@@ -221,12 +230,14 @@ public class MainActivity extends AppCompatActivity {
         refreshDisplay();
     }
 
+    // Zjistí, zda mají karty rozdílnou barvu (červená × černá)
     private boolean isOppositeColor(Card a, Card b) {
         boolean aRed = a.getSuit() == Card.Suit.HEARTS || a.getSuit() == Card.Suit.DIAMONDS;
         boolean bRed = b.getSuit() == Card.Suit.HEARTS || b.getSuit() == Card.Suit.DIAMONDS;
         return aRed != bRed;
     }
 
+    // Aktualizuje celé zobrazení herní obrazovky
     private void refreshDisplay() {
         // Nejprve obnovíme všechny pohledy
         displayTableau();
@@ -239,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Zvýrazní aktuálně vybranou kartu a karty pod ní
     private void highlightSelectedCard() {
         // Projdeme všechny karty v Tableau
         for (int i = 0; i < tableau.size(); i++) {
@@ -263,6 +275,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Vykreslí základové hromádky a umožní přesun karet na ně
     private void displayFoundation() {
         LinearLayout foundationLayout = findViewById(R.id.foundationLayout);
         foundationLayout.removeAllViews();
@@ -298,6 +311,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Zobrazí balíček karet (stock) a odhazovací balíček (waste) s možností líznutí a přesunu
     private void displayStockAndWaste() {
         LinearLayout stockWasteLayout = findViewById(R.id.stockWasteLayout);
         stockWasteLayout.removeAllViews();
@@ -348,6 +362,7 @@ public class MainActivity extends AppCompatActivity {
         stockWasteLayout.addView(wasteView);
     }
 
+    // Vrátí název obrázkového zdroje podle hodnoty a barvy karty
     private String getCardResourceName(Card card) {
         String suit;
         switch (card.getSuit()) {
@@ -377,6 +392,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Zjistí, zda lze danou kartu přesunout na cílovou základovou hromádku
     private boolean canMoveToFoundation(Card card, Stack<Card> pile) {
         if (pile.isEmpty()) {
             // Na prázdný základ lze dát pouze eso (hodnota 1)

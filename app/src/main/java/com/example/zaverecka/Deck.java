@@ -3,6 +3,7 @@ package com.example.zaverecka;
 import java.util.Collections;
 import java.util.Stack;
 
+// Třída reprezentuje celý balíček 52 karet
 public class Deck {
     private Stack<Card> cards = new Stack<>();
 
@@ -14,7 +15,7 @@ public class Deck {
         }
         Collections.shuffle(cards);
     }
-
+    // Vytáhne kartu z vrchu balíčku
     public Card drawCard() {
         return cards.pop();
     }
